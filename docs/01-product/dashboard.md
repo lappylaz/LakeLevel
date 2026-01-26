@@ -74,8 +74,8 @@
 ### Ready to Build
 | Feature | Effort | Notes |
 |---------|--------|-------|
-| Accessibility labels | Small | Add to all interactive elements |
 | Offline caching | Medium | Cache last-known lake levels |
+| Widget | Medium | Home screen widget for favorite lakes |
 
 ### Blocked
 *None*
@@ -93,6 +93,7 @@
 
 | Date | Item | Notes |
 |------|------|-------|
+| 2026-01-25 | Accessibility labels | VoiceOver support for all views |
 | 2026-01-25 | Unit tests | 40 test cases across 4 files |
 | 2026-01-25 | DateFormatter caching | Static lazy properties for performance |
 | 2026-01-25 | Vermont state mapping | Fixed missing state name |
@@ -121,7 +122,7 @@
 |--------|---------|--------|
 | Test Coverage | ~40% | 60% |
 | SwiftLint Warnings | TBD | 0 |
-| Accessibility Audit | Not done | Pass |
+| Accessibility Audit | Done | Pass |
 
 ---
 

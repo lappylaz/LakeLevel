@@ -1,7 +1,7 @@
 # LakeLevel - System State
 
 **Last Updated:** 2026-01-25
-**Version:** 1.0.1 (MVP + Tests)
+**Version:** 1.0.2 (MVP + Tests + Accessibility)
 
 ---
 
@@ -63,7 +63,7 @@ LakeLevel/
 |---------|----------|-------|
 | ~~Unit tests~~ | ~~High~~ | ✅ Added - 40 test cases |
 | Offline caching | Medium | No persistence of level data |
-| Accessibility labels | Medium | VoiceOver not optimized |
+| ~~Accessibility labels~~ | ~~Medium~~ | ✅ Added - full VoiceOver support |
 | Widget | Low | Future consideration |
 | Notifications | Low | Level threshold alerts |
 | iPad optimization | Low | Works but not optimized |
