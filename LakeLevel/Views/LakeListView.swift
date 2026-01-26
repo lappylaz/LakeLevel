@@ -124,7 +124,8 @@ struct LakeListView: View {
             "FL": "Florida", "GA": "Georgia", "MI": "Michigan",
             "NC": "North Carolina", "NV": "Nevada", "NY": "New York",
             "OR": "Oregon", "SC": "South Carolina", "TN": "Tennessee",
-            "TX": "Texas", "UT": "Utah", "WA": "Washington", "WI": "Wisconsin"
+            "TX": "Texas", "UT": "Utah", "VT": "Vermont",
+            "WA": "Washington", "WI": "Wisconsin"
         ]
         return stateNames[abbreviation] ?? abbreviation
     }

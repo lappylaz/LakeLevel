@@ -60,6 +60,34 @@ final class LakeLevelService: ObservableObject {
     private let ivBaseURL = "https://waterservices.usgs.gov/nwis/iv/"
     private let dvBaseURL = "https://waterservices.usgs.gov/nwis/dv/"
 
+    // MARK: - Cached Date Formatters (performance optimization)
+
+    private static let isoFormatterWithFractional: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    private static let isoFormatterStandard: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
+    private static let dateFormatterWithTime: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        formatter.timeZone = TimeZone(identifier: "America/New_York")
+        return formatter
+    }()
+
+    private static let dateFormatterBasic: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "America/New_York")
+        return formatter
+    }()
+
     func fetchLakeLevel(for lake: Lake) async {
         currentLake = lake
         await fetchLakeLevel(period: selectedPeriod)
@@ -193,29 +221,37 @@ final class LakeLevelService: ObservableObject {
 
     private func parseDate(_ dateString: String) -> Date? {
         // Try ISO8601 with fractional seconds and timezone first
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = isoFormatter.date(from: dateString) {
+        if let date = Self.isoFormatterWithFractional.date(from: dateString) {
             return date
         }
 
         // Try without fractional seconds
-        isoFormatter.formatOptions = [.withInternetDateTime]
-        if let date = isoFormatter.date(from: dateString) {
+        if let date = Self.isoFormatterStandard.date(from: dateString) {
             return date
         }
 
         // Try format without timezone (daily values)
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
-        dateFormatter.timeZone = TimeZone(identifier: "America/New_York")
-        if let date = dateFormatter.date(from: dateString) {
+        if let date = Self.dateFormatterWithTime.date(from: dateString) {
             return date
         }
 
         // Try basic date format
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        return dateFormatter.date(from: dateString)
+        return Self.dateFormatterBasic.date(from: dateString)
+    }
+
+    // MARK: - Date Parsing (exposed for testing)
+
+    static func parseDate(_ dateString: String) -> Date? {
+        if let date = isoFormatterWithFractional.date(from: dateString) {
+            return date
+        }
+        if let date = isoFormatterStandard.date(from: dateString) {
+            return date
+        }
+        if let date = dateFormatterWithTime.date(from: dateString) {
+            return date
+        }
+        return dateFormatterBasic.date(from: dateString)
     }
 
     var minLevel: Double? {
