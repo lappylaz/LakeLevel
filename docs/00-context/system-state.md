@@ -1,7 +1,7 @@
 # LakeLevel - System State
 
 **Last Updated:** 2026-01-25
-**Version:** 1.0.0 (MVP)
+**Version:** 1.0.1 (MVP + Tests)
 
 ---
 
@@ -61,7 +61,7 @@ LakeLevel/
 
 | Feature | Priority | Notes |
 |---------|----------|-------|
-| Unit tests | High | No tests exist |
+| ~~Unit tests~~ | ~~High~~ | ✅ Added - 40 test cases |
 | Offline caching | Medium | No persistence of level data |
 | Accessibility labels | Medium | VoiceOver not optimized |
 | Widget | Low | Future consideration |
@@ -74,8 +74,8 @@ LakeLevel/
 
 | Item | Severity | Location | Notes |
 |------|----------|----------|-------|
-| DateFormatter recreation | Medium | LakeLevelService.swift:194 | Created on every parse call |
-| Missing VT state name | Low | LakeListView.swift:122 | Vermont not in mapping |
+| ~~DateFormatter recreation~~ | ~~Medium~~ | ~~LakeLevelService.swift~~ | ✅ Fixed - static cached formatters |
+| ~~Missing VT state name~~ | ~~Low~~ | ~~LakeListView.swift~~ | ✅ Fixed - Vermont added |
 | String error handling | Low | LakeLevelService.swift:51 | Should use typed errors |
 
 ---
@@ -105,7 +105,19 @@ No external dependencies (SPM, CocoaPods, etc.)
 
 - **GitHub:** https://github.com/lappylaz/LakeLevel
 - **Branch:** main
-- **Last Commit:** Initial commit (2026-01-25)
+- **Last Commit:** Add unit tests and fix technical debt (2026-01-25)
+
+## Test Files
+
+```
+LakeLevelTests/
+├── LakeLevelServiceTests.swift   # Date parsing, period codes
+├── LakeModelTests.swift          # Model properties, formatting
+├── LakeCatalogTests.swift        # Search, data integrity
+└── FavoritesServiceTests.swift   # Add/remove/toggle, persistence
+```
+
+**Note:** Tests require adding a test target in Xcode. Files are ready to be added.
 
 ---
 

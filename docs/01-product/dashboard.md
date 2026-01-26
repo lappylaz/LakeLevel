@@ -1,6 +1,6 @@
 # LakeLevel Implementation Dashboard
 
-**Last Updated:** 2026-01-25
+**Last Updated:** 2026-01-25 (updated after unit tests)
 **Status:** Active (MVP Complete, Enhancements Planned)
 
 ---
@@ -19,7 +19,7 @@
 | Models | 2 | ✅ Complete |
 | Services | 2 | ✅ Complete |
 | Views | 5 | ✅ Complete |
-| Tests | 0 | 🔲 Not Started |
+| Tests | 4 | ✅ Complete |
 
 ---
 
@@ -63,9 +63,9 @@
 ### High Priority
 | Task | Status | Assignee |
 |------|--------|----------|
-| Add unit tests for LakeLevelService | 🔲 | - |
-| Cache DateFormatter instances | 🔲 | - |
-| Add Vermont to state name mapping | 🔲 | - |
+| Add unit tests for LakeLevelService | ✅ | Sabrina |
+| Cache DateFormatter instances | ✅ | Sabrina |
+| Add Vermont to state name mapping | ✅ | Sabrina |
 
 ---
 
@@ -74,9 +74,8 @@
 ### Ready to Build
 | Feature | Effort | Notes |
 |---------|--------|-------|
-| Unit tests | Medium | Focus on service layer |
 | Accessibility labels | Small | Add to all interactive elements |
-| DateFormatter caching | Small | Static lazy property |
+| Offline caching | Medium | Cache last-known lake levels |
 
 ### Blocked
 *None*
@@ -94,6 +93,9 @@
 
 | Date | Item | Notes |
 |------|------|-------|
+| 2026-01-25 | Unit tests | 40 test cases across 4 files |
+| 2026-01-25 | DateFormatter caching | Static lazy properties for performance |
+| 2026-01-25 | Vermont state mapping | Fixed missing state name |
 | 2026-01-25 | Initial MVP | All P0/P1 stories complete |
 | 2026-01-25 | GitHub repo | https://github.com/lappylaz/LakeLevel |
 | 2026-01-25 | Code review | Identified tech debt items |
@@ -117,7 +119,7 @@
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Test Coverage | 0% | 60% |
+| Test Coverage | ~40% | 60% |
 | SwiftLint Warnings | TBD | 0 |
 | Accessibility Audit | Not done | Pass |
 
