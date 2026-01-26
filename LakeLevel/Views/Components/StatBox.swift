@@ -18,6 +18,7 @@ struct StatBox: View {
             Image(systemName: icon)
                 .font(.caption)
                 .foregroundStyle(color)
+                .accessibilityHidden(true)
 
             Text(value)
                 .font(.headline)
@@ -31,6 +32,8 @@ struct StatBox: View {
         .padding(.vertical, 12)
         .background(color.opacity(0.1))
         .cornerRadius(10)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title): \(value)")
     }
 }
 

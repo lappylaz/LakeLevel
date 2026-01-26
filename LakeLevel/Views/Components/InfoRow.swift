@@ -20,6 +20,8 @@ struct InfoRow: View {
             Text(value)
                 .font(.subheadline)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 }
 

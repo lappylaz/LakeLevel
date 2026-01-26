@@ -48,6 +48,8 @@ struct LakeDetailView: View {
                     Image(systemName: favoritesService.isFavorite(lake) ? "star.fill" : "star")
                         .foregroundStyle(favoritesService.isFavorite(lake) ? .yellow : .gray)
                 }
+                .accessibilityLabel(favoritesService.isFavorite(lake) ? "Remove from favorites" : "Add to favorites")
+                .accessibilityHint("Double tap to \(favoritesService.isFavorite(lake) ? "remove" : "add") \(lake.name) \(favoritesService.isFavorite(lake) ? "from" : "to") favorites")
             }
         }
         .refreshable {
@@ -76,6 +78,7 @@ struct LakeDetailView: View {
                 await lakeLevelService.fetchLakeLevel(period: newPeriod)
             }
         }
+        .accessibilityLabel("Select time period for historical data")
     }
 
     // MARK: - Background
@@ -101,6 +104,7 @@ struct LakeDetailView: View {
                 Image(systemName: "water.waves")
                     .font(.title2)
                     .foregroundStyle(.blue)
+                    .accessibilityHidden(true)
 
                 Text("Current Lake Level")
                     .font(.headline)
@@ -110,6 +114,7 @@ struct LakeDetailView: View {
                 if lakeLevelService.isLoading {
                     ProgressView()
                         .scaleEffect(0.8)
+                        .accessibilityLabel("Loading")
                 }
             }
 
@@ -133,11 +138,14 @@ struct LakeDetailView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Current water level: \(level.valueFormatted) \(level.unit) at \(lake.displayName). Updated \(level.dateFormatted)")
             } else if let error = lakeLevelService.error {
                 VStack(spacing: 12) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
                         .foregroundStyle(.orange)
+                        .accessibilityHidden(true)
 
                     Text(error)
                         .font(.subheadline)
@@ -150,16 +158,22 @@ struct LakeDetailView: View {
                         }
                     }
                     .buttonStyle(.borderedProminent)
+                    .accessibilityHint("Double tap to reload lake level data")
                 }
                 .padding(.vertical)
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Error loading data: \(error)")
             } else if lakeLevelService.isLoading {
                 VStack(spacing: 12) {
                     ProgressView()
+                        .accessibilityHidden(true)
                     Text("Loading lake level data...")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 20)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Loading lake level data")
             }
         }
         .padding()
@@ -219,11 +233,22 @@ struct LakeDetailView: View {
                 }
             }
             .frame(height: 200)
+            .accessibilityLabel(chartAccessibilityLabel)
+            .accessibilityHint("Chart showing water level trends")
         }
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 4)
+    }
+
+    private var chartAccessibilityLabel: String {
+        guard let min = lakeLevelService.minLevel,
+              let max = lakeLevelService.maxLevel,
+              let avg = lakeLevelService.averageLevel else {
+            return "\(lakeLevelService.selectedPeriod.chartTitle) with \(lakeLevelService.historicalReadings.count) readings"
+        }
+        return "\(lakeLevelService.selectedPeriod.chartTitle). \(lakeLevelService.historicalReadings.count) readings. Range from \(String(format: "%.2f", min)) to \(String(format: "%.2f", max)), average \(String(format: "%.2f", avg))"
     }
 
     // MARK: - Stats Section
@@ -245,11 +270,14 @@ struct LakeDetailView: View {
                     Image(systemName: "info.circle.fill")
                         .foregroundStyle(.orange)
                         .font(.caption)
+                        .accessibilityHidden(true)
                     Text("Historical data not available. Showing recent real-time data only.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 4)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Note: Historical data not available. Showing recent real-time data only.")
             }
 
             HStack(spacing: 12) {
@@ -288,6 +316,7 @@ struct LakeDetailView: View {
             HStack {
                 Image(systemName: "info.circle")
                     .foregroundStyle(.blue)
+                    .accessibilityHidden(true)
                 Text("About This Data")
                     .font(.headline)
             }
@@ -305,10 +334,13 @@ struct LakeDetailView: View {
                         Text("View on USGS Website")
                             .font(.subheadline)
                         Image(systemName: "arrow.up.right.square")
+                            .accessibilityHidden(true)
                     }
                     .foregroundStyle(.blue)
                 }
                 .padding(.top, 4)
+                .accessibilityLabel("View \(lake.name) on USGS Website")
+                .accessibilityHint("Opens in Safari")
             }
         }
         .padding()

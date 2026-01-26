@@ -83,6 +83,8 @@ struct LakeListView: View {
             Image(systemName: selectedFilter == .favorites ? "star.fill" : "line.3.horizontal.decrease.circle")
                 .foregroundStyle(selectedFilter == .favorites ? .yellow : .blue)
         }
+        .accessibilityLabel("Filter lakes")
+        .accessibilityHint("Currently showing \(selectedFilter.rawValue.lowercased())")
     }
 
     private var lakeList: some View {

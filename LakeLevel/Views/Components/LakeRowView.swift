@@ -17,6 +17,7 @@ struct LakeRowView: View {
                 .font(.title2)
                 .foregroundStyle(.blue)
                 .frame(width: 36)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(lake.name)
@@ -34,9 +35,20 @@ struct LakeRowView: View {
                 Image(systemName: "star.fill")
                     .foregroundStyle(.yellow)
                     .font(.caption)
+                    .accessibilityHidden(true)
             }
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
+    }
+
+    private var accessibilityDescription: String {
+        var description = "\(lake.name), \(lake.state)"
+        if favoritesService.isFavorite(lake) {
+            description += ", favorite"
+        }
+        return description
     }
 }
 
