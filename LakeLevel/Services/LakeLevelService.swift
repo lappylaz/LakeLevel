@@ -51,8 +51,11 @@ final class LakeLevelService: ObservableObject {
     @Published var error: String?
     @Published var selectedPeriod: LakeLevelPeriod = .sevenDays
     @Published var dataSource: String = "" // Indicates IV or DV data source
+    @Published var isFromCache = false
+    @Published var cacheAge: String = ""
 
     private var currentLake: Lake?
+    private let cache = LakeLevelCache.shared
 
     // USGS Parameter codes for water levels (in priority order)
     private let parameterCodes = ["00062", "62614", "62615", "63160", "00065"]
@@ -103,36 +106,77 @@ final class LakeLevelService: ObservableObject {
         error = nil
         selectedPeriod = period
         dataSource = ""
+        isFromCache = false
+        cacheAge = ""
 
         logger.info("Fetching \(period.displayName) data for \(lake.name)")
 
+        // Load cached data first to show immediately while fetching
+        if let cached = cache.load(lakeId: lake.id, period: period.periodCode) {
+            applyCachedResult(cached)
+            logger.info("Showing cached data while fetching fresh data")
+        }
+
         // For 7-day period, only use IV (instantaneous values)
         // For 30-day and 1-year, try DV (daily values) first, then fall back to IV
+        var fetchedDataSource: String?
+        var result: FetchResult?
+
         if period == .sevenDays {
-            if let result = await fetchFromEndpoint(lake: lake, period: period, useDaily: false) {
-                applyResult(result)
-                dataSource = "Real-time"
-                return
+            result = await fetchFromEndpoint(lake: lake, period: period, useDaily: false)
+            if result != nil {
+                fetchedDataSource = "Real-time"
             }
         } else {
             // Try DV first for longer periods
-            if let result = await fetchFromEndpoint(lake: lake, period: period, useDaily: true) {
-                applyResult(result)
-                dataSource = "Daily"
-                return
-            }
-
-            // Fall back to IV if DV not available
-            logger.info("No daily values, falling back to instantaneous values for \(lake.name)")
-            if let result = await fetchFromEndpoint(lake: lake, period: period, useDaily: false) {
-                applyResult(result)
-                dataSource = "Real-time"
-                return
+            result = await fetchFromEndpoint(lake: lake, period: period, useDaily: true)
+            if result != nil {
+                fetchedDataSource = "Daily"
+            } else {
+                // Fall back to IV if DV not available
+                logger.info("No daily values, falling back to instantaneous values for \(lake.name)")
+                result = await fetchFromEndpoint(lake: lake, period: period, useDaily: false)
+                if result != nil {
+                    fetchedDataSource = "Real-time"
+                }
             }
         }
 
-        // No data found
-        self.error = "No water level data available for this lake"
+        if let result = result, let source = fetchedDataSource {
+            applyResult(result)
+            dataSource = source
+            isFromCache = false
+            cacheAge = ""
+
+            // Save to cache
+            cache.save(
+                lakeId: lake.id,
+                level: result.level,
+                readings: result.readings,
+                period: period.periodCode,
+                dataSource: source
+            )
+            return
+        }
+
+        // Fetch failed - check if we have cached data to show
+        if let cached = cache.load(lakeId: lake.id, period: period.periodCode) {
+            applyCachedResult(cached)
+            self.error = nil // Clear error since we have cached data
+            logger.info("Showing cached data after fetch failed")
+        } else {
+            // No cached data either
+            self.error = "No water level data available for this lake"
+        }
+        isLoading = false
+    }
+
+    private func applyCachedResult(_ cached: CachedLakeData) {
+        currentLevel = cached.level
+        historicalReadings = cached.readings
+        dataSource = cached.dataSource
+        isFromCache = true
+        cacheAge = cached.cacheAgeFormatted
         isLoading = false
     }
 
@@ -274,5 +318,7 @@ final class LakeLevelService: ObservableObject {
         error = nil
         currentLake = nil
         dataSource = ""
+        isFromCache = false
+        cacheAge = ""
     }
 }

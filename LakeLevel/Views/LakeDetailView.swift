@@ -120,10 +120,27 @@ struct LakeDetailView: View {
 
             if let level = lakeLevelService.currentLevel {
                 VStack(spacing: 8) {
+                    // Cache indicator
+                    if lakeLevelService.isFromCache {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.clockwise.icloud")
+                                .font(.caption)
+                                .accessibilityHidden(true)
+                            Text("Cached data from \(lakeLevelService.cacheAge)")
+                                .font(.caption)
+                        }
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.orange.opacity(0.1))
+                        .cornerRadius(8)
+                        .accessibilityLabel("Showing cached data from \(lakeLevelService.cacheAge)")
+                    }
+
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text(level.valueFormatted)
                             .font(.system(size: 48, weight: .bold, design: .rounded))
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(lakeLevelService.isFromCache ? .orange : .blue)
 
                         Text(level.unit)
                             .font(.title3)
@@ -139,7 +156,7 @@ struct LakeDetailView: View {
                         .foregroundStyle(.secondary)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("Current water level: \(level.valueFormatted) \(level.unit) at \(lake.displayName). Updated \(level.dateFormatted)")
+                .accessibilityLabel(currentLevelAccessibilityLabel(level: level))
             } else if let error = lakeLevelService.error {
                 VStack(spacing: 12) {
                     Image(systemName: "exclamationmark.triangle")
@@ -240,6 +257,14 @@ struct LakeDetailView: View {
         .background(Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 4)
+    }
+
+    private func currentLevelAccessibilityLabel(level: LakeLevel) -> String {
+        var label = "Current water level: \(level.valueFormatted) \(level.unit) at \(lake.displayName). Updated \(level.dateFormatted)"
+        if lakeLevelService.isFromCache {
+            label += ". Showing cached data from \(lakeLevelService.cacheAge)"
+        }
+        return label
     }
 
     private var chartAccessibilityLabel: String {
