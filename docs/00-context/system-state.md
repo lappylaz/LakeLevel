@@ -1,7 +1,7 @@
 # LakeLevel - System State
 
 **Last Updated:** 2026-01-25
-**Version:** 1.0.2 (MVP + Tests + Accessibility)
+**Version:** 1.1.0 (MVP + Tests + Accessibility + Offline)
 
 ---
 
@@ -19,10 +19,11 @@ LakeLevel/
 │   ├── LakeLevelApp.swift      # App entry point, injects FavoritesService
 │   └── ContentView.swift       # Root view wrapper
 ├── Models/
-│   ├── Lake.swift              # Lake model + USGS API response types
+│   ├── Lake.swift              # Lake model + USGS API response types + CachedLakeData
 │   └── LakeCatalog.swift       # Static catalog of 33 US lakes
 ├── Services/
-│   ├── LakeLevelService.swift  # USGS API integration
+│   ├── LakeLevelService.swift  # USGS API integration + cache integration
+│   ├── LakeLevelCache.swift    # Offline caching service (file-based)
 │   └── FavoritesService.swift  # UserDefaults persistence
 └── Views/
     ├── LakeListView.swift      # Main list with search/filter
@@ -61,8 +62,8 @@ LakeLevel/
 
 | Feature | Priority | Notes |
 |---------|----------|-------|
-| ~~Unit tests~~ | ~~High~~ | ✅ Added - 40 test cases |
-| Offline caching | Medium | No persistence of level data |
+| ~~Unit tests~~ | ~~High~~ | ✅ Added - 50 test cases |
+| ~~Offline caching~~ | ~~Medium~~ | ✅ Added - file-based cache |
 | ~~Accessibility labels~~ | ~~Medium~~ | ✅ Added - full VoiceOver support |
 | Widget | Low | Future consideration |
 | Notifications | Low | Level threshold alerts |

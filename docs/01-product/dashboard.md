@@ -17,9 +17,9 @@
 | Component | Files | Status |
 |-----------|-------|--------|
 | Models | 2 | ✅ Complete |
-| Services | 2 | ✅ Complete |
+| Services | 3 | ✅ Complete |
 | Views | 5 | ✅ Complete |
-| Tests | 4 | ✅ Complete |
+| Tests | 5 | ✅ Complete |
 
 ---
 
@@ -74,8 +74,8 @@
 ### Ready to Build
 | Feature | Effort | Notes |
 |---------|--------|-------|
-| Offline caching | Medium | Cache last-known lake levels |
 | Widget | Medium | Home screen widget for favorite lakes |
+| Push notifications | Medium | Level threshold alerts |
 
 ### Blocked
 *None*
@@ -93,8 +93,9 @@
 
 | Date | Item | Notes |
 |------|------|-------|
+| 2026-01-25 | Offline caching | File-based cache with 7-day expiration |
 | 2026-01-25 | Accessibility labels | VoiceOver support for all views |
-| 2026-01-25 | Unit tests | 40 test cases across 4 files |
+| 2026-01-25 | Unit tests | 50 test cases across 5 files |
 | 2026-01-25 | DateFormatter caching | Static lazy properties for performance |
 | 2026-01-25 | Vermont state mapping | Fixed missing state name |
 | 2026-01-25 | Initial MVP | All P0/P1 stories complete |
