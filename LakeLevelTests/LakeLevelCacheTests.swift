@@ -8,6 +8,7 @@
 import XCTest
 @testable import LakeLevel
 
+@MainActor
 final class LakeLevelCacheTests: XCTestCase {
 
     var cache: LakeLevelCache!
@@ -156,5 +157,84 @@ final class LakeLevelCacheTests: XCTestCase {
         XCTAssertFalse(formatted.isEmpty)
         // Should contain KB or MB
         XCTAssertTrue(formatted.contains("KB") || formatted.contains("MB") || formatted.contains("bytes") || formatted.contains("Zero"))
+    }
+
+    // MARK: - Security: Path Traversal Tests
+
+    func testCacheWithPathTraversalLakeId() {
+        let level = LakeLevel(value: 100.0, unit: "ft", dateTime: Date(), siteName: "Test")
+
+        // Attempt path traversal in lake ID
+        cache.save(lakeId: "../../etc/passwd", level: level, readings: [], period: "P7D", dataSource: "Test")
+
+        // Should still be loadable with the same sanitized key
+        let loaded = cache.load(lakeId: "../../etc/passwd", period: "P7D")
+        XCTAssertNotNil(loaded, "Should save and load even with path traversal characters (they get sanitized)")
+    }
+
+    func testCacheWithSlashesInLakeId() {
+        let level = LakeLevel(value: 100.0, unit: "ft", dateTime: Date(), siteName: "Test")
+
+        cache.save(lakeId: "foo/bar/baz", level: level, readings: [], period: "P7D", dataSource: "Test")
+
+        let loaded = cache.load(lakeId: "foo/bar/baz", period: "P7D")
+        XCTAssertNotNil(loaded)
+        XCTAssertEqual(loaded?.lakeId, "foo/bar/baz")
+    }
+
+    // MARK: - Edge Cases
+
+    func testSaveOverwritesExistingCache() {
+        let level1 = LakeLevel(value: 100.0, unit: "ft", dateTime: Date(), siteName: "Test")
+        let level2 = LakeLevel(value: 200.0, unit: "ft", dateTime: Date(), siteName: "Test")
+
+        cache.save(lakeId: "TEST001", level: level1, readings: [], period: "P7D", dataSource: "Real-time")
+        cache.save(lakeId: "TEST001", level: level2, readings: [], period: "P7D", dataSource: "Real-time")
+
+        let loaded = cache.load(lakeId: "TEST001", period: "P7D")
+        XCTAssertEqual(loaded?.level.value, 200.0, "Second save should overwrite the first")
+    }
+
+    func testCacheWithEmptyReadingsArray() {
+        let level = LakeLevel(value: 100.0, unit: "ft", dateTime: Date(), siteName: "Test")
+
+        cache.save(lakeId: "TEST001", level: level, readings: [], period: "P7D", dataSource: "Real-time")
+
+        let loaded = cache.load(lakeId: "TEST001", period: "P7D")
+        XCTAssertNotNil(loaded)
+        XCTAssertEqual(loaded?.readings.count, 0)
+    }
+
+    func testClearNonexistentLakeDoesNotCrash() {
+        // Should not crash or throw
+        cache.clear(lakeId: "NEVER_EXISTED")
+    }
+
+    func testClearAllOnEmptyCacheDoesNotCrash() {
+        cache.clearAll()
+        // Should not crash
+        cache.clearAll()
+    }
+
+    func testHasCachedDataReturnsFalseAfterClear() {
+        let level = LakeLevel(value: 100.0, unit: "ft", dateTime: Date(), siteName: "Test")
+        cache.save(lakeId: "TEST001", level: level, readings: [], period: "P7D", dataSource: "Real-time")
+        XCTAssertTrue(cache.hasCachedData(for: "TEST001"))
+
+        cache.clear(lakeId: "TEST001")
+        XCTAssertFalse(cache.hasCachedData(for: "TEST001"))
+    }
+
+    func testCacheWithLargeReadingsArray() {
+        let level = LakeLevel(value: 100.0, unit: "ft", dateTime: Date(), siteName: "Test")
+        let readings = (0..<1000).map { i in
+            LakeLevelReading(value: Double(i), dateTime: Date().addingTimeInterval(Double(-i * 60)))
+        }
+
+        cache.save(lakeId: "TEST001", level: level, readings: readings, period: "P7D", dataSource: "Real-time")
+
+        let loaded = cache.load(lakeId: "TEST001", period: "P7D")
+        XCTAssertNotNil(loaded)
+        XCTAssertEqual(loaded?.readings.count, 1000)
     }
 }

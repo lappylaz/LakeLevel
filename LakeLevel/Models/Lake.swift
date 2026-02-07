@@ -19,7 +19,12 @@ struct Lake: Identifiable, Codable, Hashable {
     }
 
     var usgsURL: URL? {
-        URL(string: "https://waterdata.usgs.gov/monitoring-location/\(id)/")
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "-_")
+        guard let encodedId = id.addingPercentEncoding(withAllowedCharacters: allowed) else {
+            return nil
+        }
+        return URL(string: "https://waterdata.usgs.gov/monitoring-location/\(encodedId)/")
     }
 }
 

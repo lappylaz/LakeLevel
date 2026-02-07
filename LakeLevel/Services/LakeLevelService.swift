@@ -63,6 +63,17 @@ final class LakeLevelService: ObservableObject {
     private let ivBaseURL = "https://waterservices.usgs.gov/nwis/iv/"
     private let dvBaseURL = "https://waterservices.usgs.gov/nwis/dv/"
 
+    private let maxResponseSize = 10_000_000 // 10 MB
+    private let validValueRange = -100.0...15_000.0 // Reasonable water level range in feet
+
+    private lazy var session: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 15
+        config.timeoutIntervalForResource = 30
+        config.waitsForConnectivity = false
+        return URLSession(configuration: config)
+    }()
+
     // MARK: - Cached Date Formatters (performance optimization)
 
     private static let isoFormatterWithFractional: ISO8601DateFormatter = {
@@ -188,8 +199,13 @@ final class LakeLevelService: ObservableObject {
     private func fetchFromEndpoint(lake: Lake, period: LakeLevelPeriod, useDaily: Bool) async -> FetchResult? {
         let baseURL = useDaily ? dvBaseURL : ivBaseURL
 
+        guard let encodedSiteId = lake.id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+            logger.error("Failed to encode site ID: \(lake.id)")
+            return nil
+        }
+
         for parameterCode in parameterCodes {
-            var urlString = "\(baseURL)?sites=\(lake.id)&parameterCd=\(parameterCode)&period=\(period.periodCode)&format=json"
+            var urlString = "\(baseURL)?sites=\(encodedSiteId)&parameterCd=\(parameterCode)&period=\(period.periodCode)&format=json"
 
             if useDaily {
                 urlString += "&statCd=00003"
@@ -198,10 +214,15 @@ final class LakeLevelService: ObservableObject {
             guard let url = URL(string: urlString) else { continue }
 
             do {
-                let (data, response) = try await URLSession.shared.data(from: url)
+                let (data, response) = try await session.data(from: url)
 
                 guard let httpResponse = response as? HTTPURLResponse,
                       httpResponse.statusCode == 200 else {
+                    continue
+                }
+
+                guard data.count <= maxResponseSize else {
+                    logger.warning("Response too large (\(data.count) bytes), skipping")
                     continue
                 }
 
@@ -223,7 +244,8 @@ final class LakeLevelService: ObservableObject {
                           reading.value != "-999999.00",
                           !reading.value.isEmpty,
                           let value = Double(reading.value),
-                          value > -999998 else {
+                          value > -999998,
+                          validValueRange.contains(value) else {
                         continue
                     }
 

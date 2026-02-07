@@ -19,7 +19,23 @@
 		AA0000010000000000000010 /* StatBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000020000000000000010 /* StatBox.swift */; };
 		AA0000010000000000000011 /* InfoRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000020000000000000011 /* InfoRow.swift */; };
 		AA0000010000000000000012 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000020000000000000012 /* Assets.xcassets */; };
+		AA0000010000000000000013 /* LakeLevelCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000020000000000000013 /* LakeLevelCache.swift */; };
+		BB0000010000000000000001 /* LakeModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000000000000001 /* LakeModelTests.swift */; };
+		BB0000010000000000000002 /* LakeCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000000000000002 /* LakeCatalogTests.swift */; };
+		BB0000010000000000000003 /* LakeLevelServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000000000000003 /* LakeLevelServiceTests.swift */; };
+		BB0000010000000000000004 /* LakeLevelCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000000000000004 /* LakeLevelCacheTests.swift */; };
+		BB0000010000000000000005 /* FavoritesServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000000000000005 /* FavoritesServiceTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		BB0000030000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA00000A0000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA0000060000000000000001;
+			remoteInfo = LakeLevel;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		AA0000020000000000000001 /* LakeLevelApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LakeLevelApp.swift; sourceTree = "<group>"; };
@@ -34,11 +50,25 @@
 		AA0000020000000000000010 /* StatBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatBox.swift; sourceTree = "<group>"; };
 		AA0000020000000000000011 /* InfoRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoRow.swift; sourceTree = "<group>"; };
 		AA0000020000000000000012 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA0000020000000000000013 /* LakeLevelCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LakeLevelCache.swift; sourceTree = "<group>"; };
 		AA0000030000000000000001 /* LakeLevel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LakeLevel.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB0000020000000000000001 /* LakeModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LakeModelTests.swift; sourceTree = "<group>"; };
+		BB0000020000000000000002 /* LakeCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LakeCatalogTests.swift; sourceTree = "<group>"; };
+		BB0000020000000000000003 /* LakeLevelServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LakeLevelServiceTests.swift; sourceTree = "<group>"; };
+		BB0000020000000000000004 /* LakeLevelCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LakeLevelCacheTests.swift; sourceTree = "<group>"; };
+		BB0000020000000000000005 /* FavoritesServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesServiceTests.swift; sourceTree = "<group>"; };
+		BB0000040000000000000001 /* LakeLevelTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LakeLevelTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		AA0000040000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB0000050000000000000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -52,6 +82,7 @@
 			isa = PBXGroup;
 			children = (
 				AA0000050000000000000002 /* LakeLevel */,
+				BB0000060000000000000001 /* LakeLevelTests */,
 				AA0000050000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -72,6 +103,7 @@
 			isa = PBXGroup;
 			children = (
 				AA0000030000000000000001 /* LakeLevel.app */,
+				BB0000040000000000000001 /* LakeLevelTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -99,6 +131,7 @@
 			children = (
 				AA0000020000000000000005 /* LakeLevelService.swift */,
 				AA0000020000000000000006 /* FavoritesService.swift */,
+				AA0000020000000000000013 /* LakeLevelCache.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -123,6 +156,18 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
+		BB0000060000000000000001 /* LakeLevelTests */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000020000000000000001 /* LakeModelTests.swift */,
+				BB0000020000000000000002 /* LakeCatalogTests.swift */,
+				BB0000020000000000000003 /* LakeLevelServiceTests.swift */,
+				BB0000020000000000000004 /* LakeLevelCacheTests.swift */,
+				BB0000020000000000000005 /* FavoritesServiceTests.swift */,
+			);
+			path = LakeLevelTests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -143,6 +188,23 @@
 			productReference = AA0000030000000000000001 /* LakeLevel.app */;
 			productType = "com.apple.product-type.application";
 		};
+		BB0000070000000000000001 /* LakeLevelTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB0000080000000000000001 /* Build configuration list for PBXNativeTarget "LakeLevelTests" */;
+			buildPhases = (
+				BB0000090000000000000001 /* Sources */,
+				BB0000050000000000000001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BB00000A0000000000000001 /* PBXTargetDependency */,
+			);
+			name = LakeLevelTests;
+			productName = LakeLevelTests;
+			productReference = BB0000040000000000000001 /* LakeLevelTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -155,6 +217,10 @@
 				TargetAttributes = {
 					AA0000060000000000000001 = {
 						CreatedOnToolsVersion = 15.0;
+					};
+					BB0000070000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = AA0000060000000000000001;
 					};
 				};
 			};
@@ -172,6 +238,7 @@
 			projectRoot = "";
 			targets = (
 				AA0000060000000000000001 /* LakeLevel */,
+				BB0000070000000000000001 /* LakeLevelTests */,
 			);
 		};
 /* End PBXProject section */
@@ -203,10 +270,31 @@
 				AA0000010000000000000009 /* LakeRowView.swift in Sources */,
 				AA0000010000000000000010 /* StatBox.swift in Sources */,
 				AA0000010000000000000011 /* InfoRow.swift in Sources */,
+				AA0000010000000000000013 /* LakeLevelCache.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB0000090000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB0000010000000000000001 /* LakeModelTests.swift in Sources */,
+				BB0000010000000000000002 /* LakeCatalogTests.swift in Sources */,
+				BB0000010000000000000003 /* LakeLevelServiceTests.swift in Sources */,
+				BB0000010000000000000004 /* LakeLevelCacheTests.swift in Sources */,
+				BB0000010000000000000005 /* FavoritesServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		BB00000A0000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA0000060000000000000001 /* LakeLevel */;
+			targetProxy = BB0000030000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		AA00000C0000000000000001 /* Debug */ = {
@@ -384,6 +472,44 @@
 			};
 			name = Release;
 		};
+		BB00000B0000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DTPQKFQP32;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nuvotech.LakeLevelTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LakeLevel.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LakeLevel";
+			};
+			name = Debug;
+		};
+		BB00000B0000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DTPQKFQP32;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nuvotech.LakeLevelTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LakeLevel.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LakeLevel";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -401,6 +527,15 @@
 			buildConfigurations = (
 				AA00000C0000000000000001 /* Debug */,
 				AA00000C0000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB0000080000000000000001 /* Build configuration list for PBXNativeTarget "LakeLevelTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB00000B0000000000000001 /* Debug */,
+				BB00000B0000000000000002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

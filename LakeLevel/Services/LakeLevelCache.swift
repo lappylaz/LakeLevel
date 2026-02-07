@@ -18,17 +18,27 @@ final class LakeLevelCache {
     private let fileManager = FileManager.default
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+    private let queue = DispatchQueue(label: "com.nuvotech.LakeLevel.cache")
 
     // Cache expiration: 7 days
     private let maxCacheAge: TimeInterval = 7 * 24 * 3600
 
     private init() {
-        let cachesDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
-        cacheDirectory = cachesDirectory.appendingPathComponent("LakeLevelCache", isDirectory: true)
+        let fileManager = self.fileManager
+        if let cachesDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first {
+            cacheDirectory = cachesDirectory.appendingPathComponent("LakeLevelCache", isDirectory: true)
+        } else {
+            logger.warning("Caches directory unavailable, falling back to temp directory")
+            cacheDirectory = fileManager.temporaryDirectory.appendingPathComponent("LakeLevelCache", isDirectory: true)
+        }
 
         // Create cache directory if needed
         if !fileManager.fileExists(atPath: cacheDirectory.path) {
-            try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+            do {
+                try fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+            } catch {
+                logger.error("Failed to create cache directory: \(error.localizedDescription)")
+            }
         }
 
         logger.info("Cache directory: \(self.cacheDirectory.path)")
@@ -55,12 +65,14 @@ final class LakeLevelCache {
 
         let fileURL = cacheFileURL(for: lakeId, period: period)
 
-        do {
-            let data = try encoder.encode(cached)
-            try data.write(to: fileURL, options: .atomic)
-            logger.info("Cached data for \(lakeId) (\(period))")
-        } catch {
-            logger.error("Failed to cache data for \(lakeId): \(error.localizedDescription)")
+        queue.sync {
+            do {
+                let data = try self.encoder.encode(cached)
+                try data.write(to: fileURL, options: .atomic)
+                logger.info("Cached data for \(lakeId) (\(period))")
+            } catch {
+                logger.error("Failed to cache data for \(lakeId): \(error.localizedDescription)")
+            }
         }
     }
 
@@ -68,26 +80,28 @@ final class LakeLevelCache {
     func load(lakeId: String, period: String) -> CachedLakeData? {
         let fileURL = cacheFileURL(for: lakeId, period: period)
 
-        guard fileManager.fileExists(atPath: fileURL.path) else {
-            return nil
-        }
-
-        do {
-            let data = try Data(contentsOf: fileURL)
-            let cached = try decoder.decode(CachedLakeData.self, from: data)
-
-            // Check if cache is too old
-            if cached.cacheAge > maxCacheAge {
-                logger.info("Cache expired for \(lakeId) (\(period))")
-                try? fileManager.removeItem(at: fileURL)
+        return queue.sync {
+            guard self.fileManager.fileExists(atPath: fileURL.path) else {
                 return nil
             }
 
-            logger.info("Loaded cached data for \(lakeId) (\(period)), age: \(cached.cacheAgeFormatted)")
-            return cached
-        } catch {
-            logger.error("Failed to load cache for \(lakeId): \(error.localizedDescription)")
-            return nil
+            do {
+                let data = try Data(contentsOf: fileURL)
+                let cached = try self.decoder.decode(CachedLakeData.self, from: data)
+
+                // Check if cache is too old
+                if cached.cacheAge > self.maxCacheAge {
+                    logger.info("Cache expired for \(lakeId) (\(period))")
+                    try? self.fileManager.removeItem(at: fileURL)
+                    return nil
+                }
+
+                logger.info("Loaded cached data for \(lakeId) (\(period)), age: \(cached.cacheAgeFormatted)")
+                return cached
+            } catch {
+                logger.error("Failed to load cache for \(lakeId): \(error.localizedDescription)")
+                return nil
+            }
         }
     }
 
@@ -102,25 +116,29 @@ final class LakeLevelCache {
 
     /// Clear all cached data
     func clearAll() {
-        do {
-            let files = try fileManager.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: nil)
-            for file in files {
-                try fileManager.removeItem(at: file)
+        queue.sync {
+            do {
+                let files = try self.fileManager.contentsOfDirectory(at: self.cacheDirectory, includingPropertiesForKeys: nil)
+                for file in files {
+                    try self.fileManager.removeItem(at: file)
+                }
+                logger.info("Cleared all cache")
+            } catch {
+                logger.error("Failed to clear cache: \(error.localizedDescription)")
             }
-            logger.info("Cleared all cache")
-        } catch {
-            logger.error("Failed to clear cache: \(error.localizedDescription)")
         }
     }
 
     /// Clear cached data for a specific lake
     func clear(lakeId: String) {
         let periods = ["P7D", "P30D", "P365D"]
-        for period in periods {
-            let fileURL = cacheFileURL(for: lakeId, period: period)
-            try? fileManager.removeItem(at: fileURL)
+        queue.sync {
+            for period in periods {
+                let fileURL = self.cacheFileURL(for: lakeId, period: period)
+                try? self.fileManager.removeItem(at: fileURL)
+            }
+            logger.info("Cleared cache for \(lakeId)")
         }
-        logger.info("Cleared cache for \(lakeId)")
     }
 
     /// Get total cache size in bytes
@@ -146,7 +164,15 @@ final class LakeLevelCache {
     // MARK: - Private
 
     private func cacheFileURL(for lakeId: String, period: String) -> URL {
-        let filename = "\(lakeId)_\(period).json"
+        let safeLakeId = sanitizePathComponent(lakeId)
+        let safePeriod = sanitizePathComponent(period)
+        let filename = "\(safeLakeId)_\(safePeriod).json"
         return cacheDirectory.appendingPathComponent(filename)
+    }
+
+    private func sanitizePathComponent(_ input: String) -> String {
+        input.replacingOccurrences(of: "..", with: "_")
+             .replacingOccurrences(of: "/", with: "_")
+             .replacingOccurrences(of: "\\", with: "_")
     }
 }
