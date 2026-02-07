@@ -237,4 +237,110 @@ final class LakeLevelCacheTests: XCTestCase {
         XCTAssertNotNil(loaded)
         XCTAssertEqual(loaded?.readings.count, 1000)
     }
+
+    // MARK: - Cache Expiration Tests
+
+    func testLoadReturnsNilForExpiredCache() {
+        // Write a CachedLakeData with an old cachedAt date directly to disk
+        let level = LakeLevel(value: 100.0, unit: "ft", dateTime: Date(), siteName: "Test")
+        let expired = CachedLakeData(
+            lakeId: "EXPIRED001", level: level, readings: [],
+            period: "P7D", dataSource: "Real-time",
+            cachedAt: Date().addingTimeInterval(-8 * 24 * 3600) // 8 days ago
+        )
+        writeCacheFileDirect(expired, lakeId: "EXPIRED001", period: "P7D")
+
+        let loaded = cache.load(lakeId: "EXPIRED001", period: "P7D")
+        XCTAssertNil(loaded, "Expired cache (>7 days) should return nil")
+    }
+
+    func testLoadDeletesExpiredCacheFile() {
+        let level = LakeLevel(value: 100.0, unit: "ft", dateTime: Date(), siteName: "Test")
+        let expired = CachedLakeData(
+            lakeId: "EXPIRED002", level: level, readings: [],
+            period: "P7D", dataSource: "Real-time",
+            cachedAt: Date().addingTimeInterval(-8 * 24 * 3600)
+        )
+        let fileURL = writeCacheFileDirect(expired, lakeId: "EXPIRED002", period: "P7D")
+
+        // Load should return nil and delete the file
+        _ = cache.load(lakeId: "EXPIRED002", period: "P7D")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path), "Expired cache file should be deleted")
+    }
+
+    func testLoadReturnsCacheJustBeforeExpiration() {
+        let level = LakeLevel(value: 100.0, unit: "ft", dateTime: Date(), siteName: "Test")
+        let almostExpired = CachedLakeData(
+            lakeId: "ALMOST001", level: level, readings: [],
+            period: "P7D", dataSource: "Real-time",
+            cachedAt: Date().addingTimeInterval(-7 * 24 * 3600 + 60) // 7 days minus 1 minute
+        )
+        writeCacheFileDirect(almostExpired, lakeId: "ALMOST001", period: "P7D")
+
+        let loaded = cache.load(lakeId: "ALMOST001", period: "P7D")
+        XCTAssertNotNil(loaded, "Cache just before expiration should still load")
+    }
+
+    // MARK: - Corruption / Malformed Data Tests
+
+    func testLoadReturnsNilForCorruptedCacheFile() {
+        let fileURL = cacheFileURL(for: "CORRUPT001", period: "P7D")
+        try? "garbage bytes not json".data(using: .utf8)!.write(to: fileURL, options: .atomic)
+
+        let loaded = cache.load(lakeId: "CORRUPT001", period: "P7D")
+        XCTAssertNil(loaded, "Corrupted cache file should return nil gracefully")
+    }
+
+    func testLoadReturnsNilForPartialJSON() {
+        let fileURL = cacheFileURL(for: "PARTIAL001", period: "P7D")
+        let truncated = "{\"lakeId\":\"PARTIAL001\",\"level\":{\"value\":100"
+        try? truncated.data(using: .utf8)!.write(to: fileURL, options: .atomic)
+
+        let loaded = cache.load(lakeId: "PARTIAL001", period: "P7D")
+        XCTAssertNil(loaded, "Partial/truncated JSON should return nil gracefully")
+    }
+
+    func testLoadReturnsNilForWrongJSONSchema() {
+        let fileURL = cacheFileURL(for: "WRONG001", period: "P7D")
+        let wrongSchema = "{\"totally\":\"different\",\"schema\":true}"
+        try? wrongSchema.data(using: .utf8)!.write(to: fileURL, options: .atomic)
+
+        let loaded = cache.load(lakeId: "WRONG001", period: "P7D")
+        XCTAssertNil(loaded, "Valid JSON with wrong schema should return nil gracefully")
+    }
+
+    func testLoadReturnsNilForEmptyFile() {
+        let fileURL = cacheFileURL(for: "EMPTY001", period: "P7D")
+        try? Data().write(to: fileURL, options: .atomic)
+
+        let loaded = cache.load(lakeId: "EMPTY001", period: "P7D")
+        XCTAssertNil(loaded, "Empty file should return nil gracefully")
+    }
+
+    // MARK: - Helpers
+
+    /// Construct the cache file URL matching LakeLevelCache's internal path logic
+    private func cacheFileURL(for lakeId: String, period: String) -> URL {
+        let safeLakeId = lakeId
+            .replacingOccurrences(of: "..", with: "_")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "\\", with: "_")
+        let safePeriod = period
+            .replacingOccurrences(of: "..", with: "_")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "\\", with: "_")
+
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("LakeLevelCache", isDirectory: true)
+        return cacheDir.appendingPathComponent("\(safeLakeId)_\(safePeriod).json")
+    }
+
+    /// Write a CachedLakeData directly to the cache file path (bypasses LakeLevelCache.save)
+    @discardableResult
+    private func writeCacheFileDirect(_ cached: CachedLakeData, lakeId: String, period: String) -> URL {
+        let fileURL = cacheFileURL(for: lakeId, period: period)
+        let data = try! JSONEncoder().encode(cached)
+        try! data.write(to: fileURL, options: .atomic)
+        return fileURL
+    }
 }

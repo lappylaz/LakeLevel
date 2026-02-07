@@ -118,4 +118,111 @@ final class FavoritesServiceTests: XCTestCase {
 
         XCTAssertTrue(favorites.isEmpty, "Non-catalog lakes should not appear in favoriteLakes")
     }
+
+    // MARK: - Edge Cases
+
+    func testAddDuplicateFavoriteIsIdempotent() {
+        service.addFavorite(testLake)
+        service.addFavorite(testLake)
+
+        XCTAssertTrue(service.isFavorite(testLake))
+        // Set semantics — should only have one entry
+        XCTAssertEqual(service.favoriteLakeIds.count, 1)
+    }
+
+    func testRemoveNonExistentFavoriteDoesNotCrash() {
+        // Should not crash or throw
+        service.removeFavorite(testLake)
+        XCTAssertFalse(service.isFavorite(testLake))
+    }
+
+    func testAddMultipleFavorites() {
+        let lakes = (0..<5).map { i in
+            Lake(id: "MULTI\(i)", name: "Lake \(i)", state: "TS", latitude: nil, longitude: nil)
+        }
+
+        for lake in lakes {
+            service.addFavorite(lake)
+        }
+
+        XCTAssertEqual(service.favoriteLakeIds.count, 5)
+        for lake in lakes {
+            XCTAssertTrue(service.isFavorite(lake))
+        }
+    }
+
+    func testRemoveFromMultipleFavorites() {
+        let lakes = (0..<3).map { i in
+            Lake(id: "REM\(i)", name: "Lake \(i)", state: "TS", latitude: nil, longitude: nil)
+        }
+        for lake in lakes {
+            service.addFavorite(lake)
+        }
+
+        // Remove the middle one
+        service.removeFavorite(lakes[1])
+
+        XCTAssertTrue(service.isFavorite(lakes[0]))
+        XCTAssertFalse(service.isFavorite(lakes[1]))
+        XCTAssertTrue(service.isFavorite(lakes[2]))
+        XCTAssertEqual(service.favoriteLakeIds.count, 2)
+    }
+
+    func testFavoriteLakesOrderMatchesCatalogOrder() {
+        // Add catalog lakes in reverse order
+        let catalogLakes = Array(LakeCatalog.lakes.prefix(3))
+        for lake in catalogLakes.reversed() {
+            service.addFavorite(lake)
+        }
+
+        let favorites = service.favoriteLakes
+
+        // favoriteLakes filters from LakeCatalog.lakes, so order should match catalog
+        XCTAssertEqual(favorites.count, 3)
+        XCTAssertEqual(favorites.map { $0.id }, catalogLakes.map { $0.id })
+    }
+
+    // MARK: - Persistence Edge Cases
+
+    func testPersistenceWithEmptyArray() {
+        // Manually set an empty array in UserDefaults
+        UserDefaults.standard.set([String](), forKey: "favoriteLakes")
+        let newService = FavoritesService()
+
+        XCTAssertTrue(newService.favoriteLakeIds.isEmpty)
+    }
+
+    func testPersistenceAfterRemoveAllFavorites() {
+        let lakes = (0..<3).map { i in
+            Lake(id: "PERSIST\(i)", name: "Lake \(i)", state: "TS", latitude: nil, longitude: nil)
+        }
+        for lake in lakes {
+            service.addFavorite(lake)
+        }
+        for lake in lakes {
+            service.removeFavorite(lake)
+        }
+
+        // Re-instantiate to simulate app restart
+        let newService = FavoritesService()
+        XCTAssertTrue(newService.favoriteLakeIds.isEmpty)
+    }
+
+    // MARK: - Rapid Toggling
+
+    func testRapidToggling() {
+        // Toggle 100 times — should end up back at original state (not favorited)
+        for _ in 0..<100 {
+            service.toggleFavorite(testLake)
+        }
+        XCTAssertFalse(service.isFavorite(testLake), "Even number of toggles should return to original state")
+    }
+
+    func testRapidTogglingOddCount() {
+        // Toggle 99 times — should end up favorited
+        for _ in 0..<99 {
+            service.toggleFavorite(testLake)
+        }
+        XCTAssertTrue(service.isFavorite(testLake), "Odd number of toggles should result in favorited state")
+    }
 }

@@ -123,4 +123,72 @@ final class LakeCatalogTests: XCTestCase {
             }
         }
     }
+
+    // MARK: - Search Edge Cases
+
+    func testSearchWithWhitespaceOnly() {
+        let results = LakeCatalog.search("   ")
+        // Whitespace-only doesn't match any lake name or state
+        XCTAssertTrue(results.isEmpty)
+    }
+
+    func testSearchPartialStateName() {
+        // "T" should match TX, TN, TS (any state containing T)
+        let results = LakeCatalog.search("T")
+        XCTAssertTrue(results.count > 0, "Partial state search should return results")
+        // All results should have a state or name containing "t" (case-insensitive)
+        for lake in results {
+            let matches = lake.name.lowercased().contains("t") || lake.state.lowercased().contains("t")
+            XCTAssertTrue(matches, "\(lake.name) should match search for 'T'")
+        }
+    }
+
+    func testSearchWithSpecialCharacters() {
+        let results = LakeCatalog.search("Lake (Special)")
+        // No lakes have parentheses in their name — should return empty
+        XCTAssertTrue(results.isEmpty)
+    }
+
+    func testSearchMatchesBothNameAndState() {
+        // "Lake" should match many lakes by name
+        let results = LakeCatalog.search("Lake")
+        XCTAssertTrue(results.count > 10, "Most lakes contain 'Lake' in name")
+    }
+
+    // MARK: - Data Integrity
+
+    func testAllLakesHaveValidUSGSURLs() {
+        for lake in LakeCatalog.lakes {
+            XCTAssertNotNil(lake.usgsURL, "\(lake.name) should have a valid USGS URL")
+        }
+    }
+
+    func testStatesArrayContainsOnlyValidAbbreviations() {
+        let validStates: Set<String> = [
+            "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+            "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+            "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+            "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+            "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+        ]
+
+        for state in LakeCatalog.states {
+            XCTAssertTrue(validStates.contains(state), "\(state) should be a valid US state abbreviation")
+        }
+    }
+
+    func testLakeByIdWithEmptyString() {
+        let lake = LakeCatalog.lake(byId: "")
+        XCTAssertNil(lake)
+    }
+
+    func testAllLakeIdsAreNumeric() {
+        // USGS site IDs should be numeric strings
+        for lake in LakeCatalog.lakes {
+            XCTAssertTrue(
+                lake.id.allSatisfy { $0.isNumber },
+                "\(lake.name) ID '\(lake.id)' should be numeric"
+            )
+        }
+    }
 }

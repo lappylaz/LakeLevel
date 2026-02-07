@@ -25,6 +25,7 @@
 		BB0000010000000000000003 /* LakeLevelServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000000000000003 /* LakeLevelServiceTests.swift */; };
 		BB0000010000000000000004 /* LakeLevelCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000000000000004 /* LakeLevelCacheTests.swift */; };
 		BB0000010000000000000005 /* FavoritesServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000000000000005 /* FavoritesServiceTests.swift */; };
+		BB0000010000000000000006 /* LakeLevelFetchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000000000000006 /* LakeLevelFetchTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 		BB0000020000000000000003 /* LakeLevelServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LakeLevelServiceTests.swift; sourceTree = "<group>"; };
 		BB0000020000000000000004 /* LakeLevelCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LakeLevelCacheTests.swift; sourceTree = "<group>"; };
 		BB0000020000000000000005 /* FavoritesServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesServiceTests.swift; sourceTree = "<group>"; };
+		BB0000020000000000000006 /* LakeLevelFetchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LakeLevelFetchTests.swift; sourceTree = "<group>"; };
 		BB0000040000000000000001 /* LakeLevelTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LakeLevelTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -164,6 +166,7 @@
 				BB0000020000000000000003 /* LakeLevelServiceTests.swift */,
 				BB0000020000000000000004 /* LakeLevelCacheTests.swift */,
 				BB0000020000000000000005 /* FavoritesServiceTests.swift */,
+				BB0000020000000000000006 /* LakeLevelFetchTests.swift */,
 			);
 			path = LakeLevelTests;
 			sourceTree = "<group>";
@@ -283,6 +286,7 @@
 				BB0000010000000000000003 /* LakeLevelServiceTests.swift in Sources */,
 				BB0000010000000000000004 /* LakeLevelCacheTests.swift in Sources */,
 				BB0000010000000000000005 /* FavoritesServiceTests.swift in Sources */,
+				BB0000010000000000000006 /* LakeLevelFetchTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -11,6 +11,14 @@ import os.log
 
 private let logger = Logger(subsystem: "com.nuvotech.LakeLevel", category: "LakeLevelService")
 
+// MARK: - URLSession Protocol for Dependency Injection
+
+protocol URLSessionDataProvider: Sendable {
+    func data(from url: URL) async throws -> (Data, URLResponse)
+}
+
+extension URLSession: URLSessionDataProvider {}
+
 enum LakeLevelPeriod: String, CaseIterable {
     case sevenDays = "7 Days"
     case thirtyDays = "30 Days"
@@ -56,6 +64,7 @@ final class LakeLevelService: ObservableObject {
 
     private var currentLake: Lake?
     private let cache = LakeLevelCache.shared
+    private let session: any URLSessionDataProvider
 
     // USGS Parameter codes for water levels (in priority order)
     private let parameterCodes = ["00062", "62614", "62615", "63160", "00065"]
@@ -66,13 +75,17 @@ final class LakeLevelService: ObservableObject {
     private let maxResponseSize = 10_000_000 // 10 MB
     private let validValueRange = -100.0...15_000.0 // Reasonable water level range in feet
 
-    private lazy var session: URLSession = {
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 15
-        config.timeoutIntervalForResource = 30
-        config.waitsForConnectivity = false
-        return URLSession(configuration: config)
-    }()
+    init(session: (any URLSessionDataProvider)? = nil) {
+        if let session = session {
+            self.session = session
+        } else {
+            let config = URLSessionConfiguration.default
+            config.timeoutIntervalForRequest = 15
+            config.timeoutIntervalForResource = 30
+            config.waitsForConnectivity = false
+            self.session = URLSession(configuration: config)
+        }
+    }
 
     // MARK: - Cached Date Formatters (performance optimization)
 
