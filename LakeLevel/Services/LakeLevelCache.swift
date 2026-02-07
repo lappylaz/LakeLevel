@@ -68,7 +68,7 @@ final class LakeLevelCache {
         queue.sync {
             do {
                 let data = try self.encoder.encode(cached)
-                try data.write(to: fileURL, options: .atomic)
+                try data.write(to: fileURL, options: [.atomic, .completeFileProtection])
                 logger.info("Cached data for \(lakeId) (\(period))")
             } catch {
                 logger.error("Failed to cache data for \(lakeId): \(error.localizedDescription)")
@@ -92,6 +92,20 @@ final class LakeLevelCache {
                 // Check if cache is too old
                 if cached.cacheAge > self.maxCacheAge {
                     logger.info("Cache expired for \(lakeId) (\(period))")
+                    try? self.fileManager.removeItem(at: fileURL)
+                    return nil
+                }
+
+                // Integrity check: verify cached data matches request
+                guard cached.lakeId == lakeId, cached.period == period else {
+                    logger.warning("Cache integrity mismatch for \(lakeId) (\(period))")
+                    try? self.fileManager.removeItem(at: fileURL)
+                    return nil
+                }
+
+                // Integrity check: cachedAt should not be in the future
+                guard cached.cachedAt <= Date() else {
+                    logger.warning("Cache has future timestamp for \(lakeId)")
                     try? self.fileManager.removeItem(at: fileURL)
                     return nil
                 }

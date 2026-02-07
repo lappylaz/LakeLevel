@@ -530,4 +530,169 @@ final class LakeLevelFetchTests: XCTestCase {
             "DV URLs should contain statCd=00003"
         )
     }
+
+    // MARK: - Integration Tests
+
+    func testFetchThenCacheRoundTrip() async {
+        let readings = [
+            (value: "438.40", dateTime: "2026-01-25T12:00:00.000-05:00"),
+            (value: "438.50", dateTime: "2026-01-25T14:00:00.000-05:00"),
+            (value: "438.60", dateTime: "2026-01-25T16:00:00.000-05:00")
+        ]
+        mockSession.handler = { _ in
+            return (makeUSGSJSON(readings: readings), makeHTTPResponse())
+        }
+
+        // Fetch populates cache
+        await service.fetchLakeLevel(for: testLake)
+        let originalLevel = service.currentLevel?.value
+        let originalCount = service.historicalReadings.count
+
+        // Create a new service with a failing session — forces cache usage
+        let failingSession = MockURLSession()
+        failingSession.handler = { _ in throw URLError(.notConnectedToInternet) }
+        let service2 = LakeLevelService(session: failingSession)
+
+        await service2.fetchLakeLevel(for: testLake)
+
+        XCTAssertEqual(service2.currentLevel?.value, originalLevel, "Cached level should match original")
+        XCTAssertEqual(service2.historicalReadings.count, originalCount, "Cached readings count should match")
+        XCTAssertTrue(service2.isFromCache)
+    }
+
+    func testPeriodSwitchingPreservesCache() async {
+        mockSession.handler = { url in
+            if url.absoluteString.contains("P7D") {
+                return (makeUSGSJSON(readings: [
+                    (value: "438.50", dateTime: "2026-01-25T14:00:00.000-05:00")
+                ]), makeHTTPResponse())
+            } else if url.absoluteString.contains("P30D") {
+                if url.absoluteString.contains("/dv/") {
+                    return (makeUSGSJSON(readings: [
+                        (value: "440.00", dateTime: "2026-01-01"),
+                        (value: "439.00", dateTime: "2026-01-15"),
+                        (value: "438.00", dateTime: "2026-01-25")
+                    ]), makeHTTPResponse())
+                }
+            }
+            throw URLError(.badServerResponse)
+        }
+
+        // Fetch 7-day
+        await service.fetchLakeLevel(for: testLake)
+        XCTAssertEqual(service.currentLevel?.value, 438.50)
+
+        // Switch to 30-day
+        await service.fetchLakeLevel(period: .thirtyDays)
+        XCTAssertEqual(service.currentLevel?.value, 438.00) // most recent chronologically (Jan 25)
+
+        // Verify both periods are cached independently
+        let cached7 = LakeLevelCache.shared.load(lakeId: testLake.id, period: "P7D")
+        let cached30 = LakeLevelCache.shared.load(lakeId: testLake.id, period: "P30D")
+
+        XCTAssertNotNil(cached7)
+        XCTAssertNotNil(cached30)
+        XCTAssertEqual(cached7?.level.value, 438.50)
+        XCTAssertEqual(cached30?.level.value, 438.00)
+        XCTAssertEqual(cached7?.readings.count, 1)
+        XCTAssertEqual(cached30?.readings.count, 3)
+    }
+
+    func testFullLakeDetailFlow() async {
+        mockSession.handler = { _ in
+            let data = makeUSGSJSON(readings: [
+                (value: "435.00", dateTime: "2026-01-25T10:00:00.000-05:00"),
+                (value: "436.00", dateTime: "2026-01-25T12:00:00.000-05:00"),
+                (value: "437.00", dateTime: "2026-01-25T14:00:00.000-05:00"),
+                (value: "438.00", dateTime: "2026-01-25T16:00:00.000-05:00")
+            ])
+            return (data, makeHTTPResponse())
+        }
+
+        // Step 1: Select lake and fetch
+        await service.fetchLakeLevel(for: testLake)
+
+        // Step 2: Verify current level
+        XCTAssertNotNil(service.currentLevel)
+        XCTAssertEqual(service.currentLevel?.value, 438.00)
+        XCTAssertEqual(service.currentLevel?.unit, "ft")
+        XCTAssertEqual(service.currentLevel?.siteName, "Test Lake")
+
+        // Step 3: Verify historical readings
+        XCTAssertEqual(service.historicalReadings.count, 4)
+
+        // Step 4: Verify stats
+        XCTAssertEqual(service.minLevel, 435.00)
+        XCTAssertEqual(service.maxLevel, 438.00)
+        XCTAssertEqual(service.averageLevel, 436.50)
+
+        // Step 5: Verify state
+        XCTAssertFalse(service.isLoading)
+        XCTAssertFalse(service.isFromCache)
+        XCTAssertEqual(service.dataSource, "Real-time")
+        XCTAssertNil(service.error)
+    }
+
+    func testFavoriteLakesMatchCatalogAfterAddRemove() {
+        let favService = FavoritesService()
+        UserDefaults.standard.removeObject(forKey: "favoriteLakes")
+
+        let lakes = Array(LakeCatalog.lakes.prefix(4))
+
+        // Add all 4
+        for lake in lakes {
+            favService.addFavorite(lake)
+        }
+        XCTAssertEqual(favService.favoriteLakes.count, 4)
+
+        // Remove 2
+        favService.removeFavorite(lakes[1])
+        favService.removeFavorite(lakes[3])
+
+        let remaining = favService.favoriteLakes
+        XCTAssertEqual(remaining.count, 2)
+        XCTAssertTrue(remaining.contains { $0.id == lakes[0].id })
+        XCTAssertTrue(remaining.contains { $0.id == lakes[2].id })
+
+        // Cleanup
+        UserDefaults.standard.removeObject(forKey: "favoriteLakes")
+    }
+
+    // MARK: - Cache Integrity Tests
+
+    func testCacheRejectsDataWithMismatchedLakeId() {
+        let level = LakeLevel(value: 100.0, unit: "ft", dateTime: Date(), siteName: "Test")
+        let tampered = CachedLakeData(
+            lakeId: "WRONG_ID", level: level, readings: [],
+            period: "P7D", dataSource: "Real-time", cachedAt: Date()
+        )
+
+        // Write tampered data to the cache file for "CORRECT_ID"
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("LakeLevelCache", isDirectory: true)
+        let fileURL = cacheDir.appendingPathComponent("CORRECT_ID_P7D.json")
+        let data = try! JSONEncoder().encode(tampered)
+        try! data.write(to: fileURL, options: .atomic)
+
+        let loaded = LakeLevelCache.shared.load(lakeId: "CORRECT_ID", period: "P7D")
+        XCTAssertNil(loaded, "Cache should reject data where lakeId doesn't match request")
+    }
+
+    func testCacheRejectsDataWithFutureTimestamp() {
+        let level = LakeLevel(value: 100.0, unit: "ft", dateTime: Date(), siteName: "Test")
+        let future = CachedLakeData(
+            lakeId: "FUTURE001", level: level, readings: [],
+            period: "P7D", dataSource: "Real-time",
+            cachedAt: Date().addingTimeInterval(86400) // 1 day in the future
+        )
+
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("LakeLevelCache", isDirectory: true)
+        let fileURL = cacheDir.appendingPathComponent("FUTURE001_P7D.json")
+        let data = try! JSONEncoder().encode(future)
+        try! data.write(to: fileURL, options: .atomic)
+
+        let loaded = LakeLevelCache.shared.load(lakeId: "FUTURE001", period: "P7D")
+        XCTAssertNil(loaded, "Cache should reject data with future timestamp")
+    }
 }

@@ -55,11 +55,9 @@ struct LakeDetailView: View {
         .refreshable {
             await lakeLevelService.fetchLakeLevel(for: lake)
         }
-        .onAppear {
+        .task {
             if lakeLevelService.currentLevel == nil {
-                Task {
-                    await lakeLevelService.fetchLakeLevel(for: lake)
-                }
+                await lakeLevelService.fetchLakeLevel(for: lake)
             }
         }
     }
