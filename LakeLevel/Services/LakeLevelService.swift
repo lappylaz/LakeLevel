@@ -133,12 +133,12 @@ final class LakeLevelService: ObservableObject {
         isFromCache = false
         cacheAge = ""
 
-        logger.info("Fetching \(period.displayName) data for \(lake.name)")
+        logger.debug("Fetching \(period.displayName) data for \(lake.name)")
 
         // Load cached data first to show immediately while fetching
         if let cached = cache.load(lakeId: lake.id, period: period.periodCode) {
             applyCachedResult(cached)
-            logger.info("Showing cached data while fetching fresh data")
+            logger.debug("Showing cached data while fetching fresh data")
         }
 
         // For 7-day period, only use IV (instantaneous values)
@@ -158,7 +158,7 @@ final class LakeLevelService: ObservableObject {
                 fetchedDataSource = "Daily"
             } else {
                 // Fall back to IV if DV not available
-                logger.info("No daily values, falling back to instantaneous values for \(lake.name)")
+                logger.debug("No daily values, falling back to instantaneous values for \(lake.name)")
                 result = await fetchFromEndpoint(lake: lake, period: period, useDaily: false)
                 if result != nil {
                     fetchedDataSource = "Real-time"
@@ -280,7 +280,7 @@ final class LakeLevelService: ObservableObject {
                     siteName: siteName
                 )
 
-                logger.info("Found \(readings.count) readings with param \(parameterCode) from \(useDaily ? "DV" : "IV")")
+                logger.debug("Found \(readings.count) readings with param \(parameterCode) from \(useDaily ? "DV" : "IV")")
                 return FetchResult(level: level, readings: readings)
 
             } catch {

@@ -41,7 +41,7 @@ final class LakeLevelCache {
             }
         }
 
-        logger.info("Cache directory: \(self.cacheDirectory.path)")
+        logger.debug("Cache directory: \(self.cacheDirectory.path)")
     }
 
     // MARK: - Public API
@@ -69,7 +69,7 @@ final class LakeLevelCache {
             do {
                 let data = try self.encoder.encode(cached)
                 try data.write(to: fileURL, options: [.atomic, .completeFileProtection])
-                logger.info("Cached data for \(lakeId) (\(period))")
+                logger.debug("Cached data for \(lakeId) (\(period))")
             } catch {
                 logger.error("Failed to cache data for \(lakeId): \(error.localizedDescription)")
             }
@@ -110,7 +110,7 @@ final class LakeLevelCache {
                     return nil
                 }
 
-                logger.info("Loaded cached data for \(lakeId) (\(period)), age: \(cached.cacheAgeFormatted)")
+                logger.debug("Loaded cached data for \(lakeId) (\(period)), age: \(cached.cacheAgeFormatted)")
                 return cached
             } catch {
                 logger.error("Failed to load cache for \(lakeId): \(error.localizedDescription)")

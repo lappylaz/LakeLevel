@@ -60,6 +60,11 @@ struct LakeDetailView: View {
                 await lakeLevelService.fetchLakeLevel(for: lake)
             }
         }
+        .task(id: lakeLevelService.selectedPeriod) {
+            if lakeLevelService.currentLevel != nil {
+                await lakeLevelService.fetchLakeLevel(period: lakeLevelService.selectedPeriod)
+            }
+        }
     }
 
     // MARK: - Period Picker
@@ -71,11 +76,6 @@ struct LakeDetailView: View {
             }
         }
         .pickerStyle(.segmented)
-        .onChange(of: lakeLevelService.selectedPeriod) { _, newPeriod in
-            Task {
-                await lakeLevelService.fetchLakeLevel(period: newPeriod)
-            }
-        }
         .accessibilityLabel("Select time period for historical data")
     }
 
